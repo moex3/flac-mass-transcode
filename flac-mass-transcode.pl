@@ -9,9 +9,11 @@ use File::Copy qw(copy);
 
 my $updir = 0;
 my $help = 0;
+my $forcecover;
 GetOptions(
 	"help" => \$help,
-	"updir=i" => \$updir)
+	"updir=i" => \$updir,
+	"cover=s" => \$forcecover)
 or die("Error in command line options");
 
 if ($help) {
@@ -37,8 +39,8 @@ for (my $i = 0; $i < @flacMapPaths; $i += 2) {
 	$inp = qq($inp);
 	$out = qq($out);
 	my $coverOpts = "";
-	my $cover = undef;
-	if (!hasImage($inp) && defined($cover = getcover($inp))) {
+	my $cover = $forcecover;
+	if ($cover || (!hasImage($inp) && defined($cover = getcover($inp)))) {
 		$coverOpts .= qq(--picture "$cover");
 		print("## Adding cover $cover ##\n");
 	}
@@ -116,7 +118,7 @@ sub mapInputToOutput {
 
 ## Easy, just print how to use
 sub usage {
-	print("Usage: $0 [-h | --help] [-u | --uplevel NUM] <input_dir> <output_dir>\n");
+	print("Usage: $0 [-h | --help] [-u | --uplevel NUM] [-c | --cover IMG] <input_dir> <output_dir>\n");
 	exit 1;
 }
 
@@ -125,8 +127,9 @@ sub help {
 Usage:
 	flac-mass-transcode.pl [options] <input_dir> <output_dir>
 	
-	-h, --help		print this help text
-	-u, --uplevel	take this number of directories from the input path
+	-h, --help            print this help text
+	-u, --uplevel  NUM    take this number of directories from the input path
+	-c, --cover    IMG    add this image as an album cover
 EOF
 	print("$h");
 	exit 0;
