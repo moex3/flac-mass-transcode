@@ -5,6 +5,8 @@ use File::Path;
 use Getopt::Long;
 use File::Copy qw(copy);
 
+# TODO check if the dependencies are present, and error if not
+
 ## Parse arguments
 
 my $updir = 0;
@@ -36,16 +38,19 @@ for (my $i = 0; $i < @flacMapPaths; $i += 2) {
 	$out =~ s/\.flac$/.opus/;
 	next if (-e $out);
 	File::Path::make_path(dirname($out));
-	$inp = qq($inp);
-	$out = qq($out);
+	my $inpPretty = $inp;
+	my $outPretty = $out;
+	$inp =~ s!'!'\\''!g;
+	$out =~ s!'!'\\''!g;
 	my $coverOpts = "";
 	my $cover = $forcecover;
 	if ($cover || (!hasImage($inp) && defined($cover = getcover($inp)))) {
-		$coverOpts .= qq(--picture "$cover");
 		print("## Adding cover $cover ##\n");
+		$cover =~ s!'!'\\''!g;
+		$coverOpts .= qq(--picture '$cover');
 	}
-	printf("[%0*d/%d] %s -> %s\n", $sizeLength, $i/2+1, @flacMapPaths / 2, $inp, $out);
-	`opusenc --music --comp 10 $coverOpts -- "$inp" "$out"`;
+	printf("[%0*d/%d] %s -> %s\n", $sizeLength, $i/2+1, @flacMapPaths / 2, $inpPretty, $outPretty);
+	`opusenc --music --comp 10 $coverOpts -- '$inp' '$out'`;
 }
 
 print("## Starting copying files ##\n");
@@ -158,6 +163,6 @@ sub getcover {
 sub hasImage {
 	my $flacpath = shift;
 	my $fname = qq($flacpath);
-	my $lines = `metaflac --list --block-type=PICTURE "$fname" | wc -l`;
+	my $lines = `metaflac --list --block-type=PICTURE '$fname' | wc -l`;
 	return $lines != 0;
 }
